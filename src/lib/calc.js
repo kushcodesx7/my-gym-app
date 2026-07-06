@@ -65,6 +65,58 @@ export function exerciseVolume(loggedExercise) {
   return vol
 }
 
+// --- Did a session have any real work done? -------------------------------
+export function sessionHasWork(session) {
+  if (!session?.exercises) return false
+  return Object.values(session.exercises).some((ex) =>
+    ex.sets?.some((s) => s.done)
+  )
+}
+
+// --- Current training streak (days) ---------------------------------------
+// Counts back from today. A day counts if you logged work. Sundays (rest day)
+// don't break the streak. Today not training yet doesn't break it either.
+export function currentStreak(workouts, todayDateKey) {
+  let streak = 0
+  const d = new Date(todayDateKey + 'T00:00:00')
+  for (let i = 0; i < 366; i++) {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const key = `${y}-${m}-${day}`
+    const trained = sessionHasWork(workouts[key])
+    if (trained) {
+      streak++
+    } else if (d.getDay() === 0 || i === 0) {
+      // Sunday rest day, or today (session not done yet) — skip, don't break.
+    } else {
+      break
+    }
+    d.setDate(d.getDate() - 1)
+  }
+  return streak
+}
+
+// --- Lifetime totals (for the hero header) --------------------------------
+export function lifetimeStats(workouts) {
+  let sessions = 0
+  let volume = 0
+  for (const s of Object.values(workouts)) {
+    if (!sessionHasWork(s)) continue
+    sessions++
+    for (const ex of Object.values(s.exercises)) volume += exerciseVolume(ex)
+  }
+  return { sessions, volume: Math.round(volume) }
+}
+
+// --- Estimated session duration in minutes --------------------------------
+export function sessionMinutes(plan) {
+  if (!plan) return 0
+  let secs = 0
+  for (const ex of plan.exercises) secs += ex.sets * (45 + ex.rest)
+  return Math.round(secs / 60)
+}
+
 // --- Rate of change for body weight (kg per week) ------------------------
 // Uses the first and last entries and the days between them.
 export function weeklyRate(entries) {

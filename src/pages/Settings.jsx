@@ -105,6 +105,10 @@ export default function Settings() {
       {/* Profile */}
       <div className="card">
         <h3>Profile</h3>
+        <div className="field mt">
+          <label>Your name (shown on the home screen)</label>
+          <input type="text" value={profile.name} onChange={(e) => updateProfile('name', e.target.value)} />
+        </div>
         <div className="grid grid-2 mt">
           <div className="field">
             <label>Height (cm)</label>

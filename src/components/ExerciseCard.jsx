@@ -1,10 +1,29 @@
 // ===========================================================================
 // ExerciseCard — one exercise on the workout page.
-// Shows the target, a "how to do it" guide you can expand, and a row for each
-// set with weight + reps inputs and a big "done" checkbox. Ticking done tells
-// the parent page to start the rest timer.
+// v2: muscle icon avatar, live "NEW PR" badge when you beat your previous
+// best weight, and a ghost hint showing what you lifted last time (the
+// pattern Hevy/Strong use to push you to add one more rep or kilo).
 // ===========================================================================
 import { useState } from 'react'
+
+// A little icon per exercise so cards scan visually, not just as text.
+const ICONS = {
+  'chest-press': '🏋️',
+  'db-shoulder-press': '💪',
+  'incline-db-press': '📐',
+  'lateral-raises': '🦅',
+  'tricep-rope-pushdown': '🪢',
+  'lat-pulldown': '⬇️',
+  'seated-cable-row': '🚣',
+  'face-pulls': '🎯',
+  'db-bicep-curls': '💪',
+  'hammer-curls': '🔨',
+  'leg-press': '🦵',
+  'leg-extension': '🦿',
+  'leg-curl': '🌀',
+  'calf-raises': '🧗',
+  'plank': '🧘',
+}
 
 export default function ExerciseCard({
   exercise,
@@ -19,32 +38,48 @@ export default function ExerciseCard({
   const doneCount = logged.sets.filter((s) => s.done).length
   const complete = doneCount === exercise.sets
 
+  // PR detection: best weight ticked done today vs your previous best.
+  const todayBest = logged.sets.reduce((best, s) => {
+    const w = Number(s.weight)
+    return s.done && w > 0 && Number(s.reps) > 0 && w > best ? w : best
+  }, 0)
+  const isPR = lastBest != null && todayBest > lastBest
+
   return (
     <div className={'card exercise' + (complete ? ' complete' : '')}>
       <div className="row between" style={{ alignItems: 'flex-start' }}>
-        <div>
-          <h3>{exercise.name}</h3>
-          <div className="row wrap mt-s" style={{ gap: 8 }}>
-            <span className={'pill ' + (exercise.type === 'compound' ? 'pill-accent' : '')}>
-              {exercise.type}
-            </span>
-            <span className="pill">
-              {exercise.sets} × {exercise.repLow}–{exercise.repHigh} {repUnit}
-            </span>
-            <span className="pill">rest {exercise.rest}s</span>
+        <div className="ex-head">
+          <div className="ex-icon">{complete ? '✅' : ICONS[exercise.id] || '🏋️'}</div>
+          <div>
+            <div className="row wrap" style={{ gap: 8 }}>
+              <h3>{exercise.name}</h3>
+              {isPR && <span className="pr-badge">🏆 New PR</span>}
+            </div>
+            <div className="row wrap mt-s" style={{ gap: 6 }}>
+              <span className={'pill ' + (exercise.type === 'compound' ? 'pill-accent' : '')}>
+                {exercise.type}
+              </span>
+              <span className="pill">
+                {exercise.sets} × {exercise.repLow}–{exercise.repHigh} {repUnit}
+              </span>
+              <span className="pill">rest {exercise.rest}s</span>
+            </div>
           </div>
         </div>
-        <div className="center">
-          <div className="big-num" style={{ fontSize: '1.5rem', color: complete ? 'var(--green)' : 'var(--text)' }}>
+        <div className="center" style={{ flexShrink: 0 }}>
+          <div
+            className="big-num"
+            style={{ fontSize: '1.5rem', color: complete ? 'var(--green)' : 'var(--text)' }}
+          >
             {doneCount}/{exercise.sets}
           </div>
           <div className="stat-label">sets</div>
         </div>
       </div>
 
-      {lastBest != null && (
+      {lastBest != null && !isPR && (
         <div className="faint mt-s" style={{ fontSize: '0.8rem' }}>
-          Last best: <span className="accent">{lastBest} kg</span> — try to match or beat it.
+          Last best: <span className="accent">{lastBest} kg</span> — beat it for a PR 🏆
         </div>
       )}
 
@@ -62,7 +97,7 @@ export default function ExerciseCard({
             <input
               type="number"
               inputMode="decimal"
-              placeholder="0"
+              placeholder={lastBest != null ? String(lastBest) : '0'}
               value={s.weight}
               onChange={(e) => onChange(exercise.id, i, 'weight', e.target.value)}
               aria-label={`${exercise.name} set ${i + 1} weight`}

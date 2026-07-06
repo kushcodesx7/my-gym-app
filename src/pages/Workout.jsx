@@ -1,16 +1,27 @@
 // ===========================================================================
 // Workout page — "Today's Workout".
-// Figures out which PPL day it is, builds today's session from the plan, lets
-// you log each set, starts the rest timer, and tracks progress + calories.
+// Redesigned around motivation: a personal greeting + daily quote, a streak
+// flame, a week consistency strip, a bold "mission" card for today's session,
+// PR detection while you lift, and confetti when you finish.
 // ===========================================================================
 import { useMemo, useState } from 'react'
 import { useLocalStorage, DEFAULT_PROFILE } from '../lib/useLocalStorage'
 import { KEYS } from '../lib/storage'
 import { todayKey, weekdayIndex, prettyDate } from '../lib/date'
-import { DAYS, WEEK_SCHEDULE, dayForWeekday } from '../lib/workoutPlan'
-import { sessionCalories, sessionProgress, bestSetWeight } from '../lib/calc'
+import { DAYS, dayForWeekday } from '../lib/workoutPlan'
+import {
+  sessionCalories,
+  sessionProgress,
+  bestSetWeight,
+  currentStreak,
+  lifetimeStats,
+  sessionMinutes,
+} from '../lib/calc'
+import { quoteOfTheDay, greeting } from '../lib/quotes'
 import ExerciseCard from '../components/ExerciseCard'
 import RestTimer from '../components/RestTimer'
+import WeekStrip from '../components/WeekStrip'
+import Confetti from '../components/Confetti'
 
 // Build a fresh, empty session object for a given day plan.
 function newSession(dateKey, dayPlan) {
@@ -26,24 +37,21 @@ function newSession(dateKey, dayPlan) {
 export default function Workout() {
   const [profile] = useLocalStorage(KEYS.profile, DEFAULT_PROFILE)
   const [workouts, setWorkouts] = useLocalStorage(KEYS.workouts, {})
-  const [rest, setRest] = useState(null) // active rest timer
+  const [rest, setRest] = useState(null)
 
   const dateKey = todayKey()
-  // Which day does the schedule say today is? (user can override below)
   const autoDay = dayForWeekday(weekdayIndex())
-
-  // Let the user manually switch the day (e.g. they shifted their split).
   const [override, setOverride] = useState(null)
   const dayPlan = override ? DAYS[override] : autoDay
 
-  // Get (or lazily create) today's session for the chosen day.
   const session = useMemo(() => {
     const existing = workouts[dateKey]
     if (existing && existing.day === dayPlan.key) return existing
     return newSession(dateKey, dayPlan)
   }, [workouts, dateKey, dayPlan])
 
-  // Find the previous best weight for an exercise across history (for hints).
+  // Most recent best weight per exercise BEFORE today (for PR detection +
+  // "previous" ghost hints in the set rows).
   const lastBests = useMemo(() => {
     const map = {}
     const dates = Object.keys(workouts).filter((d) => d < dateKey).sort()
@@ -52,13 +60,15 @@ export default function Workout() {
       if (!s?.exercises) continue
       for (const [exId, logged] of Object.entries(s.exercises)) {
         const best = bestSetWeight(logged)
-        if (best != null) map[exId] = best // later dates overwrite → most recent best
+        if (best != null) map[exId] = best
       }
     }
     return map
   }, [workouts, dateKey])
 
-  // Save a change to a single set field.
+  const streak = useMemo(() => currentStreak(workouts, dateKey), [workouts, dateKey])
+  const lifetime = useMemo(() => lifetimeStats(workouts), [workouts])
+
   function updateSet(exId, setIndex, field, value) {
     setWorkouts((prev) => {
       const base = prev[dateKey]?.day === dayPlan.key ? prev[dateKey] : newSession(dateKey, dayPlan)
@@ -68,7 +78,6 @@ export default function Workout() {
     })
   }
 
-  // Toggle a set's done checkbox — and start the rest timer when ticked on.
   function toggleDone(exercise, setIndex, isDone) {
     setWorkouts((prev) => {
       const base = prev[dateKey]?.day === dayPlan.key ? prev[dateKey] : newSession(dateKey, dayPlan)
@@ -88,18 +97,32 @@ export default function Workout() {
   const isRestDay = dayPlan.key === 'Rest'
   const progress = sessionProgress(session, dayPlan)
   const calories = sessionCalories(session, profile.weightKg, dayPlan)
+  const minutes = sessionMinutes(dayPlan)
 
   return (
     <div>
-      <div className="page-head">
-        <div>
-          <h1>Today's <span className="accent">Workout</span></h1>
-          <div className="sub">{prettyDate(dateKey)} · {dayPlan.focus}</div>
+      {/* HERO — greeting, streak, quote of the day */}
+      <div className="hero">
+        <div className="hero-top">
+          <div>
+            <div className="hero-greet">{greeting()} ·</div>
+            <div className="hero-name">
+              {profile.name || 'Athlete'} <span className="grad-text">💪</span>
+            </div>
+          </div>
+          <div className="streak">
+            <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>🔥</span>
+            <span className="streak-num">{streak}</span>
+            <span className="streak-label">day streak</span>
+          </div>
         </div>
-        <span className="pill pill-accent">{dayPlan.label}</span>
+        <div className="hero-quote">“{quoteOfTheDay()}”</div>
       </div>
 
-      {/* Day switcher — the schedule picks automatically, but you can change it */}
+      {/* Week consistency strip */}
+      <WeekStrip workouts={workouts} />
+
+      {/* Day switcher */}
       <div className="day-switch">
         {['Push', 'Pull', 'Legs', 'Rest'].map((d) => (
           <button
@@ -117,27 +140,35 @@ export default function Workout() {
           <div className="icon">😴</div>
           <h2 style={{ marginTop: 8 }}>Rest & Recover</h2>
           <p className="muted">
-            No lifting scheduled today. Recovery is when muscle actually grows.
-            Stay hydrated, hit your protein, maybe a light walk. Tap a day above
-            if you want to train anyway.
+            Recovery is when muscle actually grows. Hydrate, hit your protein,
+            maybe a light walk. Tap a day above if you want to train anyway.
           </p>
+          {lifetime.sessions > 0 && (
+            <p className="faint" style={{ fontSize: '0.85rem' }}>
+              Lifetime: {lifetime.sessions} sessions · {lifetime.volume.toLocaleString()} kg moved
+            </p>
+          )}
         </div>
       ) : (
         <>
-          {/* Session summary bar */}
-          <div className="card">
-            <div className="row between">
+          {/* Today's mission card */}
+          <div className="card mission">
+            <div className="row between wrap">
               <div>
-                <div className="stat-label">Session progress</div>
-                <div className="big-num">{progress.pct}%</div>
-                <div className="faint">{progress.done} / {progress.total} sets done</div>
-              </div>
-              <div className="center">
-                <div className="stat-label">Est. calories</div>
-                <div className="big-num" style={{ color: 'var(--accent)' }}>
-                  {calories}
+                <div className="stat-label">{prettyDate(dateKey)} · Today's mission</div>
+                <div className="mission-day">{dayPlan.label}</div>
+                <div className="mission-meta">
+                  <span className="m">🎯 {dayPlan.focus}</span>
+                  <span className="m">🏋️ {dayPlan.exercises.length} exercises</span>
+                  <span className="m">⏱ ~{minutes} min</span>
                 </div>
-                <div className="faint">kcal burned</div>
+              </div>
+              <div className="center" style={{ minWidth: 90 }}>
+                <div className="big-num grad-text">{progress.pct}%</div>
+                <div className="stat-label">{progress.done}/{progress.total} sets</div>
+                <div className="stat-label mt-s" style={{ color: 'var(--accent)' }}>
+                  🔥 {calories} kcal
+                </div>
               </div>
             </div>
             <div className="bar mt">
@@ -158,16 +189,21 @@ export default function Workout() {
           ))}
 
           {progress.pct === 100 && (
-            <div className="card center" style={{ borderColor: 'var(--green)' }}>
-              <div className="icon" style={{ fontSize: '2rem' }}>🎉</div>
-              <h2 style={{ color: 'var(--green)' }}>Session complete!</h2>
-              <p className="muted">Nice work. ~{calories} kcal burned. Go refuel that protein.</p>
-            </div>
+            <>
+              <Confetti />
+              <div className="card center" style={{ borderColor: 'rgba(63,185,80,0.5)' }}>
+                <div style={{ fontSize: '2.4rem' }}>🏆</div>
+                <h2 style={{ color: 'var(--green)', marginTop: 6 }}>Session crushed!</h2>
+                <p className="muted">
+                  ~{calories} kcal burned · streak now {streak >= 1 ? streak : 1} 🔥
+                  <br />Go refuel that protein.
+                </p>
+              </div>
+            </>
           )}
         </>
       )}
 
-      {/* The sticky rest timer floats above the bottom nav */}
       <RestTimer active={rest} onDismiss={() => setRest(null)} />
     </div>
   )

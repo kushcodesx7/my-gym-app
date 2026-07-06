@@ -26,7 +26,7 @@ export function useLocalStorage(key, initialValue) {
 
 // Your personal profile — pre-filled from what you told me.
 export const DEFAULT_PROFILE = {
-  name: 'Athlete',
+  name: 'Kush',
   sex: 'male',
   heightCm: 185,
   weightKg: 88,
