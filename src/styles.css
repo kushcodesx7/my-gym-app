@@ -1,0 +1,580 @@
+/* ===========================================================================
+   Iron Log — global theme
+   All colors, fonts and shared UI live here so the whole app stays consistent.
+   =========================================================================== */
+
+:root {
+  /* Core palette */
+  --bg: #0d1117;          /* near-black background */
+  --bg-elev: #161b22;     /* slightly lighter cards */
+  --bg-elev-2: #1c232d;   /* inputs / hover */
+  --border: #2a323d;
+  --border-soft: #222932;
+
+  --accent: #f5b841;      /* amber / gold */
+  --accent-dim: #b9862a;
+  --accent-glow: rgba(245, 184, 65, 0.15);
+
+  --text: #e6edf3;        /* main text */
+  --text-dim: #9aa7b4;    /* secondary text */
+  --text-faint: #616e7c;  /* labels */
+
+  --green: #3fb950;
+  --red: #f85149;
+  --blue: #58a6ff;
+
+  --radius: 14px;
+  --radius-sm: 10px;
+  --tap: 48px;            /* minimum tap target size */
+
+  --font-body: 'Barlow', system-ui, -apple-system, sans-serif;
+  --font-head: 'Barlow Condensed', 'Barlow', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-head);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin: 0;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.1rem; }
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input,
+select {
+  font-family: var(--font-body);
+  color: var(--text);
+}
+
+a { color: var(--accent); }
+
+/* ---- Layout shell ------------------------------------------------------- */
+
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Content area */
+.main {
+  flex: 1;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 16px 16px calc(96px + env(safe-area-inset-bottom));
+}
+
+/* On desktop we switch to a sidebar dashboard layout */
+@media (min-width: 900px) {
+  .app {
+    flex-direction: row;
+  }
+  .main {
+    padding: 28px 32px 40px;
+  }
+}
+
+/* ---- Page header -------------------------------------------------------- */
+
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.page-head h1 {
+  font-size: 2.1rem;
+  letter-spacing: 0.5px;
+}
+.page-head .sub {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-top: 2px;
+}
+.accent { color: var(--accent); }
+
+/* ---- Cards -------------------------------------------------------------- */
+
+.card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.card + .card { margin-top: 14px; }
+
+.grid {
+  display: grid;
+  gap: 14px;
+}
+@media (min-width: 900px) {
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* ---- Buttons ------------------------------------------------------------ */
+
+.btn {
+  min-height: var(--tap);
+  padding: 0 18px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  transition: transform 0.06s ease, background 0.15s ease;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary {
+  background: var(--accent);
+  color: #1a1204;
+  border-color: var(--accent);
+}
+.btn-ghost { background: transparent; }
+.btn-block { width: 100%; }
+.btn-sm { min-height: 38px; font-size: 0.9rem; padding: 0 12px; }
+
+/* ---- Inputs ------------------------------------------------------------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field label {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-faint);
+  font-weight: 600;
+}
+input[type='number'],
+input[type='text'],
+input[type='date'],
+select {
+  min-height: var(--tap);
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 14px;
+  font-size: 1.05rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+input:focus,
+select:focus {
+  border-color: var(--accent);
+}
+/* Kill the number-input spinners for a cleaner look */
+input[type='number']::-webkit-inner-spin-button { -webkit-appearance: none; }
+input[type='number'] { -moz-appearance: textfield; }
+
+/* ---- Pills / chips ------------------------------------------------------ */
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.pill-accent {
+  background: var(--accent-glow);
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+
+/* ---- Progress bar ------------------------------------------------------- */
+
+.bar {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--bg-elev-2);
+  overflow: hidden;
+}
+.bar > span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* ---- Utility ------------------------------------------------------------ */
+
+.row { display: flex; align-items: center; gap: 10px; }
+.between { justify-content: space-between; }
+.wrap { flex-wrap: wrap; }
+.muted { color: var(--text-dim); }
+.faint { color: var(--text-faint); }
+.center { text-align: center; }
+.mt { margin-top: 14px; }
+.mt-s { margin-top: 8px; }
+.big-num {
+  font-family: var(--font-head);
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.stat-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  color: var(--text-faint);
+  font-weight: 600;
+}
+.divider {
+  height: 1px;
+  background: var(--border-soft);
+  margin: 14px 0;
+}
+
+/* ---- Empty state -------------------------------------------------------- */
+
+.empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 32px 16px;
+}
+.empty .icon { font-size: 2.4rem; }
+
+/* ===========================================================================
+   Navigation — bottom tab bar on phones, left sidebar on desktop
+   =========================================================================== */
+
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background: rgba(13, 17, 23, 0.92);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-brand { display: none; }
+.nav-tabs {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.nav-tabs li { flex: 1; }
+.nav-tab {
+  width: 100%;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--text-faint);
+  transition: color 0.15s ease;
+}
+.nav-tab .nav-icon { font-size: 1.35rem; line-height: 1; filter: grayscale(0.4); }
+.nav-tab .nav-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 600;
+}
+.nav-tab.active { color: var(--accent); }
+.nav-tab.active .nav-icon { filter: none; }
+
+/* Desktop: sidebar */
+@media (min-width: 900px) {
+  .nav {
+    position: sticky;
+    top: 0;
+    bottom: auto;
+    height: 100dvh;
+    width: 220px;
+    flex-shrink: 0;
+    border-top: none;
+    border-right: 1px solid var(--border);
+    padding: 24px 14px;
+    background: var(--bg-elev);
+  }
+  .nav-brand {
+    display: block;
+    font-family: var(--font-head);
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 4px 12px 22px;
+  }
+  .nav-logo { color: var(--text); }
+  .nav-logo-accent { color: var(--accent); }
+  .nav-tabs { flex-direction: column; gap: 4px; }
+  .nav-tab {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    min-height: 50px;
+    padding: 0 14px;
+    border-radius: var(--radius-sm);
+  }
+  .nav-tab .nav-icon { font-size: 1.15rem; }
+  .nav-tab .nav-label { font-size: 0.9rem; }
+  .nav-tab.active { background: var(--accent-glow); }
+}
+
+/* ===========================================================================
+   Day switcher (workout page)
+   =========================================================================== */
+
+.day-switch {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.day-chip {
+  flex: 1;
+  min-height: 42px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev);
+  border: 1px solid var(--border-soft);
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.day-chip.active {
+  background: var(--accent);
+  color: #1a1204;
+  border-color: var(--accent);
+}
+
+/* ===========================================================================
+   Exercise cards & set rows
+   =========================================================================== */
+
+.exercise.complete {
+  border-color: var(--accent-dim);
+  background: linear-gradient(180deg, var(--accent-glow), var(--bg-elev) 40%);
+}
+
+.sets { display: flex; flex-direction: column; gap: 8px; }
+.set-head,
+.set-row {
+  display: grid;
+  grid-template-columns: 34px 1fr 1fr 56px;
+  gap: 8px;
+  align-items: center;
+}
+.set-head {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-faint);
+  font-weight: 600;
+  padding: 0 2px;
+}
+.set-head span:first-child { text-align: center; }
+.set-head span:last-child { text-align: center; }
+.set-num {
+  text-align: center;
+  font-family: var(--font-head);
+  font-size: 1.2rem;
+  color: var(--text-dim);
+}
+.set-row.done { opacity: 0.9; }
+.set-row.done input {
+  border-color: var(--accent-dim);
+  background: rgba(245, 184, 65, 0.06);
+}
+
+/* Big tappable check button (used by sets & meals) */
+.check {
+  width: 100%;
+  min-height: var(--tap);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  background: var(--bg-elev-2);
+  color: transparent;
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.12s ease;
+}
+.check.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #1a1204;
+}
+.check:active { transform: scale(0.94); }
+
+/* Guide */
+.guide-toggle {
+  margin-top: 12px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 6px 0;
+}
+.guide-text {
+  margin: 8px 0 0;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  background: var(--bg-elev-2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  border-left: 3px solid var(--accent);
+}
+
+/* ===========================================================================
+   Rest timer (sticky above bottom nav)
+   =========================================================================== */
+
+.rest-timer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(60px + env(safe-area-inset-bottom));
+  z-index: 45;
+  background: var(--bg-elev);
+  border-top: 1px solid var(--accent-dim);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+}
+.rest-bar {
+  height: 4px;
+  background: var(--bg-elev-2);
+}
+.rest-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 1s linear;
+}
+.rest-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 10px 16px;
+}
+.rest-time {
+  font-family: var(--font-head);
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
+}
+@media (min-width: 900px) {
+  .rest-timer { bottom: 0; left: 220px; }
+}
+
+/* ===========================================================================
+   Diet — meal list
+   =========================================================================== */
+
+.meal-list { display: flex; flex-direction: column; gap: 10px; }
+.meal {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.meal.checked { border-color: var(--accent-dim); }
+.meal .check { width: 44px; flex-shrink: 0; }
+.meal-info { flex: 1; min-width: 0; }
+.meal-name { font-weight: 600; }
+.meal.checked .meal-name { color: var(--accent); }
+
+.qty {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.qty-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  font-size: 1.3rem;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qty-btn:active { transform: scale(0.92); }
+.qty-num {
+  min-width: 22px;
+  text-align: center;
+  font-weight: 700;
+  font-family: var(--font-head);
+  font-size: 1.2rem;
+}
+
+.meal-edit { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+
+/* ===========================================================================
+   Body stats history rows
+   =========================================================================== */
+
+.hist-row {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-soft);
+}
+.hist-row:last-child { border-bottom: none; }
+.hist-row > span { flex: 1; }
+.hist-row > span:first-child { flex: 1.3; }

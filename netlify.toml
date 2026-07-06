@@ -1,0 +1,11 @@
+# Netlify reads this file automatically to know how to build & serve the app.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# This app is a Single Page App (one HTML file). If the user refreshes on any
+# route, send them back to index.html so the app can handle it.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
